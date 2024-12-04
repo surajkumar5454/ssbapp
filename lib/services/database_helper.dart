@@ -49,16 +49,21 @@ class DatabaseHelper {
     return null;
   }
 
-  Future<Map<String, dynamic>?> getPersonalInfo(String uidno) async {
+  Future<Map<String, dynamic>?> getPersonalInfo(String uin) async {
     final db = await database;
     final results = await db.rawQuery('''
-      SELECT p.*, r.rnk_nm as rank_name,
-             d.dist_nm, d.state_nm
+      SELECT 
+        p.*, 
+        r.rnk_nm as rank_name,
+        d.dist_nm, 
+        d.state_nm,
+        (SELECT MIN(dateofjoin) FROM joininfo WHERE uidno = p.uidno) as first_doj,
+        p.doretd as dor
       FROM parmanentinfo p
       LEFT JOIN rnk_brn_mas r ON p.rank = r.rnk_cd
       LEFT JOIN district d ON p.district = d.dist_cd
       WHERE p.uidno = ?
-    ''', [uidno]);
+    ''', [uin]);
 
     if (results.isNotEmpty) {
       return results.first;

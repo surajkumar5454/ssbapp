@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import '../../widgets/main_layout.dart';
 import '../../services/profile_service.dart';
 import '../../services/posting_service.dart';
-import '../../services/training_service.dart';
 import '../../services/auth_service.dart';
 import 'package:intl/intl.dart';
 import '../../widgets/image_viewer_dialog.dart';
@@ -29,11 +28,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final authService = context.read<AuthService>();
     final uin = authService.uin!;
     
-    // Load all required data
+    // Remove TrainingService from loading
     await Future.wait([
-      context.read<ProfileService>().loadProfile(uin),  // Load profile for current UIN
+      context.read<ProfileService>().loadProfile(uin),
       context.read<PostingService>().loadPostings(uin),
-      context.read<TrainingService>().loadTrainings(uin),
     ]);
   }
 
@@ -58,8 +56,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   _buildCurrentPostingCard(),
                   const SizedBox(height: 16),
                   _buildQuickActions(),
-                  const SizedBox(height: 16),
-                  _buildRecentTrainings(),
                 ],
               ),
             ),
@@ -78,12 +74,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (profile == null) return const SizedBox.shrink();
 
         return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          child: Column(
+            children: [
+              // Profile Header
+              Container(
+                padding: const EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                ),
+                child: Row(
                   children: [
                     GestureDetector(
                       onTap: profileImage != null 
@@ -106,11 +106,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         children: [
                           Text(
                             profile.name,
-                            style: Theme.of(context).textTheme.titleLarge,
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
+                          const SizedBox(height: 4),
                           Text(
                             profile.rankName,
-                            style: Theme.of(context).textTheme.titleMedium,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            ),
                           ),
                           Text(
                             'UIN: ${profile.uidno}',
@@ -121,11 +126,82 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              // Service Information
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    _buildServiceInfoRow(
+                      context,
+                      icon: Icons.calendar_today,
+                      title: 'Service Period',
+                      value1: profile.dateOfJoining != null 
+                          ? 'Joined: ${DateFormat('dd MMM yyyy').format(profile.dateOfJoining!)}'
+                          : 'Join date not available',
+                      value2: profile.dateOfRetirement != null
+                          ? 'Retires: ${DateFormat('dd MMM yyyy').format(profile.dateOfRetirement!)}'
+                          : 'Retirement date not available',
+                    ),
+                    const Divider(height: 24),
+                    _buildServiceInfoRow(
+                      context,
+                      icon: Icons.access_time,
+                      title: 'Service Duration',
+                      value1: 'Completed: ${profile.lengthOfService}',
+                      value2: 'Remaining: ${profile.remainingService}',
+                      isHighlighted: true,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildServiceInfoRow(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String value1,
+    required String value2,
+    bool isHighlighted = false,
+  }) {
+    final color = isHighlighted 
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).colorScheme.onSurface;
+
+    return Row(
+      children: [
+        Icon(icon, color: color, size: 24),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value1,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              Text(
+                value2,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -135,30 +211,70 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final postings = postingService.postings;
         if (postings.isEmpty) return const SizedBox.shrink();
 
-        final currentPosting = postings.first; // Most recent posting
+        final currentPosting = postings.first;
         return Card(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Current Posting',
-                  style: Theme.of(context).textTheme.titleMedium,
+                Row(
+                  children: [
+                    Icon(
+                      Icons.location_city,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Current Posting',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text('Unit: ${currentPosting.unitName ?? 'N/A'}'),
-                Text('Rank: ${currentPosting.rankName ?? 'N/A'}'),
-                Text('Branch: ${currentPosting.branchName ?? 'N/A'}'),
+                const SizedBox(height: 16),
+                _buildPostingInfo('Unit', currentPosting.unitName),
+                _buildPostingInfo('Rank', currentPosting.rankName),
+                _buildPostingInfo('Cadre', currentPosting.branchName),
                 if (currentPosting.dateofjoin != null)
-                  Text('Since: ${DateFormat('dd MMM yyyy').format(currentPosting.dateofjoin!)}'),
-                if (currentPosting.dateofrelv != null)
-                  Text('Until: ${DateFormat('dd MMM yyyy').format(currentPosting.dateofrelv!)}'),
+                  _buildPostingInfo(
+                    'Since',
+                    DateFormat('dd MMM yyyy').format(currentPosting.dateofjoin!),
+                  ),
               ],
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildPostingInfo(String label, String? value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Colors.grey[600],
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value ?? 'N/A',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -231,56 +347,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Text(label, style: Theme.of(context).textTheme.bodySmall),
         ],
       ),
-    );
-  }
-
-  Widget _buildRecentTrainings() {
-    return Consumer<TrainingService>(
-      builder: (context, trainingService, _) {
-        final trainings = trainingService.trainings;
-        if (trainings.isEmpty) return const SizedBox.shrink();
-
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Recent Trainings',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pushNamed(context, '/trainings'),
-                      child: const Text('View All'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: trainings.length.clamp(0, 3), // Show max 3 recent trainings
-                  itemBuilder: (context, index) {
-                    final training = trainings[index];
-                    return ListTile(
-                      title: Text(training.course_nm ?? 'Unknown Course'),
-                      subtitle: Text(
-                        '${training.fromDate ?? ''} - ${training.toDate ?? ''}',
-                      ),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.pushNamed(context, '/trainings'),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 

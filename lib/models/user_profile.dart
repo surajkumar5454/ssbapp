@@ -17,6 +17,8 @@ class UserProfile {
   final String? district;
   final String? state;
   final String? pincode;
+  final String? firstDoj;
+  final String? doretd;
 
   UserProfile({
     required this.uidno,
@@ -37,6 +39,8 @@ class UserProfile {
     this.district,
     this.state,
     this.pincode,
+    this.firstDoj,
+    this.doretd,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -59,6 +63,8 @@ class UserProfile {
       district: json['dist_nm'],
       state: json['state_nm'],
       pincode: json['pincode'],
+      firstDoj: json['first_doj'],
+      doretd: json['dor'],
     );
   }
 
@@ -82,6 +88,8 @@ class UserProfile {
       'district': district,
       'state': state,
       'pincode': pincode,
+      'first_doj': firstDoj,
+      'doretd': doretd,
     };
   }
 
@@ -96,6 +104,8 @@ class UserProfile {
     String? district,
     String? state,
     String? pincode,
+    String? firstDoj,
+    String? doretd,
   }) {
     return UserProfile(
       uidno: this.uidno,
@@ -116,6 +126,30 @@ class UserProfile {
       district: district ?? this.district,
       state: state ?? this.state,
       pincode: pincode ?? this.pincode,
+      firstDoj: firstDoj ?? this.firstDoj,
+      doretd: doretd ?? this.doretd,
     );
+  }
+
+  DateTime? get dateOfJoining => firstDoj != null ? DateTime.parse(firstDoj!) : null;
+  DateTime? get dateOfRetirement => doretd != null ? DateTime.parse(doretd!) : null;
+
+  String get lengthOfService {
+    if (dateOfJoining == null) return 'N/A';
+    final now = DateTime.now();
+    final difference = now.difference(dateOfJoining!);
+    final years = difference.inDays ~/ 365;
+    final months = (difference.inDays % 365) ~/ 30;
+    return '$years years, $months months';
+  }
+
+  String get remainingService {
+    if (dateOfRetirement == null) return 'N/A';
+    final now = DateTime.now();
+    if (now.isAfter(dateOfRetirement!)) return 'Retired';
+    final difference = dateOfRetirement!.difference(now);
+    final years = difference.inDays ~/ 365;
+    final months = (difference.inDays % 365) ~/ 30;
+    return '$years years, $months months';
   }
 } 

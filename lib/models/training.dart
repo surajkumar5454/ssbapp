@@ -1,49 +1,37 @@
 class Training {
-  final String uidno;
-  final int? course;
+  final String? uidno;
+  final String? course;
+  final String? course_nm;
   final String? fromDate;
   final String? toDate;
-  final int? trainingCenter;
-  final String? position;
-  final String? prof;
-  final String? theory;
-  final String? instruction_ability;
-  final String? remarks;
-  final String? course_nm;
   final String? duration;
   final String? category;
+  final String? position;
+  final String? remarks;
 
   Training({
-    required this.uidno,
+    this.uidno,
     this.course,
+    this.course_nm,
     this.fromDate,
     this.toDate,
-    this.trainingCenter,
-    this.position,
-    this.prof,
-    this.theory,
-    this.instruction_ability,
-    this.remarks,
-    this.course_nm,
     this.duration,
     this.category,
+    this.position,
+    this.remarks,
   });
 
   factory Training.fromJson(Map<String, dynamic> json) {
     return Training(
-      uidno: json['uidno'] ?? '',
-      course: json['course'],
+      uidno: json['uidno'],
+      course: json['course']?.toString(),
+      course_nm: json['course_nm'],
       fromDate: json['fromDate'],
       toDate: json['toDate'],
-      trainingCenter: json['trainingCenter'],
-      position: json['position'],
-      prof: json['prof'],
-      theory: json['theory'],
-      instruction_ability: json['instruction_ability'],
-      remarks: json['remarks'],
-      course_nm: json['course_nm'],
-      duration: json['duration'],
+      duration: json['duration']?.toString(),
       category: json['category'],
+      position: json['position'],
+      remarks: json['remarks'],
     );
   }
 
@@ -51,17 +39,13 @@ class Training {
     return {
       'uidno': uidno,
       'course': course,
+      'course_nm': course_nm,
       'fromDate': fromDate,
       'toDate': toDate,
-      'trainingCenter': trainingCenter,
-      'position': position,
-      'prof': prof,
-      'theory': theory,
-      'instruction_ability': instruction_ability,
-      'remarks': remarks,
-      'course_nm': course_nm,
       'duration': duration,
       'category': category,
+      'position': position,
+      'remarks': remarks,
     };
   }
 } 
