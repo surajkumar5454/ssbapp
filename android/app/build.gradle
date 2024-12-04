@@ -37,6 +37,10 @@ android {
             signingConfig = signingConfigs.debug
         }
     }
+
+    aaptOptions {
+        ignoreAssetsPattern '!databases:*'
+    }
 }
 
 flutter {

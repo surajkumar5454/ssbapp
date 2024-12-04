@@ -21,12 +21,14 @@ import 'services/training_service.dart';
 import 'services/document_service.dart';
 import 'services/leave_service.dart';
 import 'services/family_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  final authService = AuthService();
-  await authService.checkAuthState();  // This logs in with UIN: 16020013
+  final prefs = await SharedPreferences.getInstance();
+  final authService = AuthService(prefs);
+  await authService.checkAuthState();
 
   final dbHelper = DatabaseHelper.instance;
 
@@ -39,7 +41,7 @@ void main() async {
           create: (_) => DatabaseHelper.instance,
         ),
         ChangeNotifierProvider(
-          create: (context) => ProfileService(dbHelper)..loadProfile("16020013"),
+          create: (context) => ProfileService(dbHelper),
         ),
         ChangeNotifierProvider(
           create: (context) => PostingService(dbHelper),

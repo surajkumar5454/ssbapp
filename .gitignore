@@ -66,6 +66,8 @@ build/
 *.db
 *.sqlite
 *.sqlite3
+android/app/src/main/assets/databases/
+android/app/src/main/assets/flutter_assets/databases/
 
 # Logs
 *.log

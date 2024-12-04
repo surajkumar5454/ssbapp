@@ -10,32 +10,27 @@ class ProfileService extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
-  ProfileService(this._dbHelper) {
-    final authService = AuthService();
-    if (authService.uin != null) {
-      loadProfile(authService.uin!);
-    }
-  }
+  ProfileService(this._dbHelper);
 
   UserProfile? get profile => _profile;
   Uint8List? get profileImage => _profileImage;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  Future<void> loadProfile(String uidno) async {
+  Future<void> loadProfile(String uin) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final userData = await _dbHelper.getPersonalInfo(uidno);
+      final userData = await _dbHelper.getPersonalInfo(uin);
       if (userData != null) {
         _profile = UserProfile.fromJson(userData);
+        _profileImage = await _dbHelper.getProfileImage(uin);
+        _error = null;
+      } else {
+        _error = 'Profile not found';
       }
-
-      _profileImage = await _dbHelper.getProfileImage(uidno);
-      
-      _error = null;
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -44,14 +39,13 @@ class ProfileService extends ChangeNotifier {
     }
   }
 
-  Future<void> updateProfile(UserProfile updatedProfile) async {
+  Future<void> updateProfile(UserProfile profile) async {
     _isLoading = true;
-    _error = null;
     notifyListeners();
 
     try {
-      await _dbHelper.updatePersonalInfo(updatedProfile.toJson());
-      _profile = updatedProfile;
+      await _dbHelper.updatePersonalInfo(profile.toJson());
+      _profile = profile;
       _error = null;
     } catch (e) {
       _error = e.toString();

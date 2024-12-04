@@ -20,7 +20,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    // Use addPostFrameCallback to load data after the build is complete
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
@@ -32,6 +31,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     
     // Load all required data
     await Future.wait([
+      context.read<ProfileService>().loadProfile(uin),  // Load profile for current UIN
       context.read<PostingService>().loadPostings(uin),
       context.read<TrainingService>().loadTrainings(uin),
     ]);

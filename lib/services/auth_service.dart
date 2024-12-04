@@ -3,66 +3,50 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'database_helper.dart';
 
 class AuthService extends ChangeNotifier {
-  bool _isAuthenticated = false;
   String? _uin;
-  String? _token;
-  Map<String, dynamic>? _userData;
-  
-  bool get isAuthenticated => _isAuthenticated;
-  String? get uin => _uin;
-  String? get token => _token;
-  Map<String, dynamic>? get userData => _userData;
+  bool _isAuthenticated = false;
+  final SharedPreferences _prefs;
 
+  AuthService(this._prefs);
+
+  String? get uin => _uin;
+  bool get isAuthenticated => _isAuthenticated;
+
+  // Check initial auth state - default login with 16020013
   Future<void> checkAuthState() async {
-    // Auto login with specified credentials
-    await login("16020013", "1");
+    // Check if user was previously logged in
+    final savedUin = _prefs.getString('last_login_uin');
+    if (savedUin != null) {
+      await login(savedUin, '1');
+    } else {
+      await login('16020013', '1');
+    }
   }
 
-  Future<void> login(String uin, String password) async {
+  Future<bool> login(String uin, String password) async {
     try {
-      if (password == "1") {
-        final userData = await DatabaseHelper.instance.getUserByCredentials(uin);
-        if (userData != null) {
-          _isAuthenticated = true;
+      if (password == '1') {
+        final dbHelper = DatabaseHelper.instance;
+        final user = await dbHelper.getUserByCredentials(uin);
+        
+        if (user != null) {
           _uin = uin;
-          _token = 'dummy_token';
-          _userData = userData;
-          await _saveAuthState();
+          _isAuthenticated = true;
+          await _prefs.setString('last_login_uin', uin);
           notifyListeners();
-        } else {
-          throw Exception('Invalid credentials');
+          return true;
         }
-      } else {
-        throw Exception('Invalid credentials');
       }
+      return false;
     } catch (e) {
-      _isAuthenticated = false;
-      _uin = null;
-      _token = null;
-      _userData = null;
-      rethrow;
+      return false;
     }
   }
 
   Future<void> logout() async {
-    _isAuthenticated = false;
     _uin = null;
-    _token = null;
-    await _clearAuthState();
+    _isAuthenticated = false;
+    await _prefs.remove('last_login_uin');
     notifyListeners();
-  }
-
-  Future<void> _saveAuthState() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isAuthenticated', _isAuthenticated);
-    await prefs.setString('uin', _uin ?? '');
-    await prefs.setString('token', _token ?? '');
-  }
-
-  Future<void> _clearAuthState() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('isAuthenticated');
-    await prefs.remove('uin');
-    await prefs.remove('token');
   }
 } 

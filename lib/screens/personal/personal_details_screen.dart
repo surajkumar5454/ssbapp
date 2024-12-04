@@ -24,11 +24,12 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
 
   Future<void> _loadData() async {
     final authService = context.read<AuthService>();
-    final uin = authService.uin!;
-    await Future.wait([
-      context.read<ProfileService>().loadProfile(uin),
-      context.read<FamilyService>().loadFamilyMembers(uin),
-    ]);
+    if (authService.uin != null) {
+      await Future.wait([
+        context.read<ProfileService>().loadProfile(authService.uin!),
+        context.read<FamilyService>().loadFamilyMembers(authService.uin!),
+      ]);
+    }
   }
 
   @override

@@ -1,16 +1,23 @@
-# app_test
+# Employee Management App
 
-A new Flutter project.
+A Flutter application for managing employee information, postings, trainings, and more.
+
+## Features
+
+- Personal Information Management
+- Family Details
+- Service History
+- Training Records
+- Leave Management
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+### Prerequisites
 
-A few resources to get you started if this is your first Flutter project:
+- Flutter SDK
+- Android Studio / VS Code
+- Git
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### Installation
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. Clone the repository
