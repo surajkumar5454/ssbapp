@@ -74,4 +74,11 @@ class ProfileService extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void clearData() {
+    _profile = null;
+    _profileImage = null;
+    _error = null;
+    notifyListeners();
+  }
 } 

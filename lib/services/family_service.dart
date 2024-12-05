@@ -30,4 +30,11 @@ class FamilyService extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void clearData() {
+    _familyMembers = [];
+    _error = null;
+    _isLoading = false;
+    notifyListeners();
+  }
 } 

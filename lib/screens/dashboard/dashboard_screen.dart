@@ -7,6 +7,7 @@ import '../../services/posting_service.dart';
 import '../../services/auth_service.dart';
 import 'package:intl/intl.dart';
 import '../../widgets/image_viewer_dialog.dart';
+import '../../services/deputation_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -28,10 +29,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final authService = context.read<AuthService>();
     final uin = authService.uin!;
     
-    // Remove TrainingService from loading
     await Future.wait([
       context.read<ProfileService>().loadProfile(uin),
       context.read<PostingService>().loadPostings(uin),
+      context.read<DeputationService>().loadEligibleOpenings(uin),
     ]);
   }
 
@@ -290,8 +291,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+            Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              alignment: WrapAlignment.spaceEvenly,
               children: [
                 _buildActionButton(
                   icon: Icons.person,
@@ -304,19 +307,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   onTap: () => Navigator.pushNamed(context, '/pay_slips'),
                 ),
                 _buildActionButton(
+                  icon: Icons.business_center,
+                  label: 'e-DAS',
+                  badge: _buildDeputationBadge(),
+                  onTap: () => Navigator.pushNamed(context, '/deputation'),
+                ),
+                _buildActionButton(
                   icon: Icons.school,
                   label: 'Trainings',
                   onTap: () => Navigator.pushNamed(context, '/trainings'),
                 ),
                 _buildActionButton(
-                  icon: Icons.settings,
-                  label: 'Settings',
-                  onTap: () => Navigator.pushNamed(context, '/settings'),
-                ),
-                _buildActionButton(
                   icon: Icons.family_restroom,
                   label: 'Family',
                   onTap: () => Navigator.pushNamed(context, '/family'),
+                ),
+                _buildActionButton(
+                  icon: Icons.report_problem,
+                  label: 'Grievances',
+                  onTap: () => Navigator.pushNamed(context, '/grievances'),
                 ),
               ],
             ),
@@ -330,23 +339,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
+    Widget? badge,
   }) {
-    return InkWell(
-      onTap: onTap,
-      child: Column(
+    return SizedBox(
+      width: 80,
+      child: Stack(
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(12),
+          InkWell(
+            onTap: onTap,
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodySmall,
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-            child: Icon(icon),
           ),
-          const SizedBox(height: 4),
-          Text(label, style: Theme.of(context).textTheme.bodySmall),
+          if (badge != null)
+            Positioned(
+              top: 0,
+              right: 0,
+              child: badge,
+            ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDeputationBadge() {
+    return Consumer<DeputationService>(
+      builder: (context, service, _) {
+        if (service.eligibleOpenings.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.red,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            '${service.eligibleOpenings.length}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        );
+      },
     );
   }
 

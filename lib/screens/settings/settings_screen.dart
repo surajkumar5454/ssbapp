@@ -3,6 +3,11 @@ import 'package:provider/provider.dart';
 import '../../widgets/main_layout.dart';
 import '../../services/auth_service.dart';
 import '../../services/theme_service.dart';
+import '../../services/profile_service.dart';
+import '../../services/posting_service.dart';
+import '../../services/training_service.dart';
+import '../../services/family_service.dart';
+import '../../services/grievance_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -37,30 +42,22 @@ class SettingsScreen extends StatelessWidget {
               child: ListTile(
                 leading: const Icon(Icons.logout),
                 title: const Text('Logout'),
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Logout'),
-                      content: const Text('Are you sure you want to logout?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancel'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            context.read<AuthService>().logout();
-                            Navigator.pushNamedAndRemoveUntil(
-                              context,
-                              '/',
-                              (route) => false,
-                            );
-                          },
-                          child: const Text('Logout'),
-                        ),
-                      ],
-                    ),
+                onTap: () async {
+                  // Clear all service data
+                  context.read<ProfileService>().clearData();
+                  context.read<PostingService>().clearData();
+                  context.read<TrainingService>().clearData();
+                  context.read<FamilyService>().clearData();
+                  context.read<GrievanceService>().clearData();
+                  
+                  // Logout
+                  await context.read<AuthService>().logout();
+                  
+                  // Navigate to login screen
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/',
+                    (route) => false,
                   );
                 },
               ),

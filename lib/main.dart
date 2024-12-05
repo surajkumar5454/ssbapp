@@ -10,6 +10,13 @@ import 'screens/deputation/deputation_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/leave/leave_screen.dart';
 import 'screens/family/family_screen.dart';
+import 'screens/grievance/view_grievances_screen.dart';
+import 'screens/grievance/submit_grievance_screen.dart';
+import 'screens/grievance/grievance_history_screen.dart';
+import 'screens/deputation/deputation_openings_screen.dart';
+import 'screens/deputation/my_applications_screen.dart';
+import 'screens/deputation/create_deputation_screen.dart';
+import 'screens/deputation/admin/manage_admins_screen.dart';
 import 'services/auth_service.dart';
 import 'services/theme_service.dart';
 import 'services/api_service.dart';
@@ -21,7 +28,9 @@ import 'services/training_service.dart';
 import 'services/document_service.dart';
 import 'services/leave_service.dart';
 import 'services/family_service.dart';
+import 'services/grievance_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'services/deputation_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +48,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ThemeService()),
         Provider<DatabaseHelper>(
           create: (_) => DatabaseHelper.instance,
+          dispose: (_, db) => db.clearCache(),
         ),
         ChangeNotifierProvider(
           create: (context) => ProfileService(dbHelper),
@@ -57,6 +67,12 @@ void main() async {
         ),
         ChangeNotifierProvider(
           create: (context) => FamilyService(dbHelper),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => GrievanceService(dbHelper),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => DeputationService(DatabaseHelper.instance),
         ),
       ],
       child: const EmployeeApp(),
@@ -90,9 +106,16 @@ class EmployeeApp extends StatelessWidget {
             '/pay_slips': (context) => const PaySlipsScreen(),
             '/trainings': (context) => const TrainingsScreen(),
             '/deputation': (context) => const DeputationScreen(),
+            '/deputation_openings': (context) => const DeputationOpeningsScreen(),
+            '/my_applications': (context) => const MyApplicationsScreen(),
+            '/create_deputation': (context) => const CreateDeputationScreen(),
             '/settings': (context) => const SettingsScreen(),
             '/leave': (context) => const LeaveScreen(),
             '/family': (context) => const FamilyScreen(),
+            '/grievances': (context) => const ViewGrievancesScreen(),
+            '/submit_grievance': (context) => const SubmitGrievanceScreen(),
+            '/grievance_history': (context) => const GrievanceHistoryScreen(),
+            '/manage_admins': (context) => const ManageAdminsScreen(),
           },
         );
       },

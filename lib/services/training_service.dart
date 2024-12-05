@@ -30,4 +30,11 @@ class TrainingService extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void clearData() {
+    _trainings = [];
+    _error = null;
+    _isLoading = false;
+    notifyListeners();
+  }
 } 

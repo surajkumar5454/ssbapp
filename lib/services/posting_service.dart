@@ -30,4 +30,11 @@ class PostingService extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void clearData() {
+    _postings = [];
+    _error = null;
+    _isLoading = false;
+    notifyListeners();
+  }
 } 
