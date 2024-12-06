@@ -31,6 +31,7 @@ import 'services/family_service.dart';
 import 'services/grievance_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/deputation_service.dart';
+import 'screens/home/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -92,14 +93,10 @@ class EmployeeApp extends StatelessWidget {
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: themeService.themeMode,
-          home: Consumer<AuthService>(
-            builder: (context, authService, _) {
-              return authService.isAuthenticated
-                  ? const DashboardScreen()
-                  : const LoginScreen();
-            },
-          ),
+          initialRoute: '/',
           routes: {
+            '/': (context) => const HomeScreen(),
+            '/login': (context) => const LoginScreen(),
             '/dashboard': (context) => const DashboardScreen(),
             '/personal_details': (context) => const PersonalDetailsScreen(),
             '/service_details': (context) => const ServiceDetailsScreen(),

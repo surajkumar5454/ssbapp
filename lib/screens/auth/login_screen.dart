@@ -30,17 +30,33 @@ class _LoginScreenState extends State<LoginScreen> {
         _error = null;
       });
 
-      final success = await context.read<AuthService>().login(
-        _uinController.text,
-        _passwordController.text,
-      );
+      try {
+        final success = await context.read<AuthService>().login(
+          _uinController.text,
+          _passwordController.text,
+        );
 
-      setState(() {
-        _isLoading = false;
-        if (!success) {
-          _error = 'Invalid UIN or password';
+        if (success && mounted) {
+          // Navigate to dashboard and remove all previous routes
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/dashboard',
+            (route) => false,
+          );
+        } else if (mounted) {
+          setState(() {
+            _error = 'Invalid UIN or password';
+            _isLoading = false;
+          });
         }
-      });
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _error = 'An error occurred. Please try again.';
+            _isLoading = false;
+          });
+        }
+      }
     }
   }
 

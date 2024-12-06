@@ -23,12 +23,18 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> checkAuthState() async {
-    // Check if user was previously logged in
-    final savedUin = _prefs.getString('last_login_uin');
-    if (savedUin != null) {
-      await login(savedUin, '1');
-    } else {
-      await login('16020013', '1');
+    try {
+      final savedUin = _prefs.getString('last_login_uin');
+      if (savedUin != null) {
+        final success = await login(savedUin, '1');
+        if (!success) {
+          await logout();
+        }
+      } else {
+        await login('16020013', '1');
+      }
+    } catch (e) {
+      await logout();
     }
   }
 
@@ -47,8 +53,12 @@ class AuthService extends ChangeNotifier {
           return true;
         }
       }
+      _isAuthenticated = false;
+      notifyListeners();
       return false;
     } catch (e) {
+      _isAuthenticated = false;
+      notifyListeners();
       return false;
     }
   }
