@@ -17,10 +17,10 @@ class ApiService {
       };
 
   // Pay Slips
-  Future<List<PaySlip>> getPaySlips() async {
+  Future<List<PaySlip>> getPaySlips(String uidNo) async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/payslips'),
+        Uri.parse('$_baseUrl/payslips?uidNo=$uidNo'),
         headers: _headers,
       );
 
@@ -36,10 +36,10 @@ class ApiService {
   }
 
   // Trainings
-  Future<List<Training>> getTrainings() async {
+  Future<List<Training>> getTrainings(String uidNo) async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/trainings'),
+        Uri.parse('$_baseUrl/trainings?uidNo=$uidNo'),
         headers: _headers,
       );
 
@@ -54,12 +54,16 @@ class ApiService {
     }
   }
 
-  Future<void> requestTraining(Map<String, dynamic> trainingData) async {
+  Future<void> requestTraining(String uidNo, Map<String, dynamic> trainingData) async {
     try {
+      final requestData = {
+        'uidNo': uidNo,
+        ...trainingData,
+      };
       final response = await http.post(
         Uri.parse('$_baseUrl/trainings/request'),
         headers: _headers,
-        body: json.encode(trainingData),
+        body: json.encode(requestData),
       );
 
       if (response.statusCode != 201) {
@@ -71,10 +75,10 @@ class ApiService {
   }
 
   // Deputations
-  Future<List<Deputation>> getDeputations() async {
+  Future<List<Deputation>> getDeputations(String uidNo) async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/deputations'),
+        Uri.parse('$_baseUrl/deputations?uidNo=$uidNo'),
         headers: _headers,
       );
 
@@ -89,12 +93,16 @@ class ApiService {
     }
   }
 
-  Future<void> submitDeputationRequest(Map<String, dynamic> deputationData) async {
+  Future<void> submitDeputationRequest(String uidNo, Map<String, dynamic> deputationData) async {
     try {
+      final requestData = {
+        'uidNo': uidNo,
+        ...deputationData,
+      };
       final response = await http.post(
         Uri.parse('$_baseUrl/deputations'),
         headers: _headers,
-        body: json.encode(deputationData),
+        body: json.encode(requestData),
       );
 
       if (response.statusCode != 201) {
@@ -121,12 +129,16 @@ class ApiService {
   }
 
   // Profile
-  Future<void> updateProfile(Map<String, dynamic> profileData) async {
+  Future<void> updateProfile(String uidNo, Map<String, dynamic> profileData) async {
     try {
+      final requestData = {
+        'uidNo': uidNo,
+        ...profileData,
+      };
       final response = await http.put(
-        Uri.parse('$_baseUrl/profile'),
+        Uri.parse('$_baseUrl/profile/$uidNo'),
         headers: _headers,
-        body: json.encode(profileData),
+        body: json.encode(requestData),
       );
 
       if (response.statusCode != 200) {
@@ -156,10 +168,10 @@ class ApiService {
     }
   }
 
-  Future<UserProfile> getUserProfile() async {
+  Future<UserProfile> getUserProfile(String uidNo) async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/profile'),
+        Uri.parse('$_baseUrl/profile/$uidNo'),
         headers: _headers,
       );
 
@@ -173,11 +185,11 @@ class ApiService {
     }
   }
 
-  Future<String> uploadProfileImage(String imagePath) async {
+  Future<String> uploadProfileImage(String uidNo, String imagePath) async {
     try {
       final request = http.MultipartRequest(
         'POST',
-        Uri.parse('$_baseUrl/profile/image'),
+        Uri.parse('$_baseUrl/profile/$uidNo/image'),
       );
 
       request.headers.addAll(_headers);

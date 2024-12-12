@@ -1,10 +1,14 @@
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
+import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path_provider/path_provider.dart';
 import '../models/grievance.dart';
 import '../models/deputation_opening.dart';
 import '../models/deputation_application.dart';
 import '../models/grievance_status.dart';
+import '../models/leave_credit.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -15,7 +19,7 @@ class DatabaseHelper {
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB('pims_2Dec.db');
+    _database = await _initDB();
     return _database!;
   }
 
@@ -25,14 +29,35 @@ class DatabaseHelper {
     return _imagesDatabase!;
   }
 
-  Future<Database> _initDB(String filePath) async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, filePath);
+  Future<Database> _initDB() async {
+    Directory documentsDirectory = await getApplicationDocumentsDirectory();
+    String path = join(documentsDirectory.path, "pims_2Dec.db");
+
+    print('Database path: $path');
+    bool dbExists = await File(path).exists();
+    print('Database exists: $dbExists');
+
+    if (!dbExists) {
+      try {
+        // Copy from asset
+        ByteData data = await rootBundle.load(join('assets', 'database', 'pims_2Dec.db'));
+        List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+        await File(path).writeAsBytes(bytes, flush: true);
+        print('Database copied successfully');
+      } catch (e) {
+        print('Error copying database: $e');
+      }
+    }
+
     return await openDatabase(
       path,
       version: 1,
       onCreate: _createDB,
-      onOpen: _onOpen,
+      onOpen: (db) async {
+        // Verify tables
+        var tables = await db.rawQuery('SELECT name FROM sqlite_master WHERE type="table"');
+        print('Available tables: $tables');
+      },
     );
   }
 
@@ -142,7 +167,6 @@ class DatabaseHelper {
   }
 
   Future<void> _createDB(Database db, int version) async {
-    // Create deputation_openings table
     await db.execute('''
       CREATE TABLE IF NOT EXISTS deputation_openings (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -201,6 +225,42 @@ class DatabaseHelper {
         print('Error inserting default admin: $e');
       }
     }
+
+    // Create grievances table
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS grievances (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        grievance_no TEXT,
+        subject TEXT,
+        description TEXT,
+        status TEXT,
+        priority TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        submitted_by TEXT,
+        handler_id TEXT,
+        category TEXT,
+        sub_category TEXT,
+        attachments TEXT,
+        remarks TEXT,
+        expected_resolution_date DATE,
+        actual_resolution_date DATE,
+        is_anonymous INTEGER DEFAULT 0,
+        FOREIGN KEY (handler_id) REFERENCES personnel(uid_no),
+        FOREIGN KEY (submitted_by) REFERENCES personnel(uid_no)
+      )
+    ''');
+
+    // Create indices for grievances table
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_grievances_handler_id ON grievances(handler_id)'
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_grievances_submitted_by ON grievances(submitted_by)'
+    );
+
+    // Create service_history table
+    await createServiceHistoryTable(db);
   }
 
   Future<Map<String, dynamic>?> getUserByCredentials(String uidno) async {
@@ -1168,5 +1228,308 @@ class DatabaseHelper {
       groupBy: 'rnk_cd',
       orderBy: 'rnk_nm',
     );
+  }
+
+  Future<void> createGrievancesTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS grievances (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        grievance_no TEXT,
+        subject TEXT,
+        description TEXT,
+        status TEXT,
+        priority TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        submitted_by TEXT,
+        handler_id TEXT,
+        category TEXT,
+        sub_category TEXT,
+        attachments TEXT,
+        remarks TEXT,
+        expected_resolution_date DATE,
+        actual_resolution_date DATE,
+        is_anonymous INTEGER DEFAULT 0,
+        FOREIGN KEY (handler_id) REFERENCES personnel(uid_no),
+        FOREIGN KEY (submitted_by) REFERENCES personnel(uid_no)
+      )
+    ''');
+
+    // Create indices
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_grievances_handler_id ON grievances(handler_id)'
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_grievances_submitted_by ON grievances(submitted_by)'
+    );
+  }
+
+  Future<void> createPaySlipsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE pay_slips (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        FYID TEXT,
+        MonthId INTEGER,
+        Year_Main INTEGER,
+        MonthFullName TEXT,
+        EmpType TEXT,
+        UnitName TEXT,
+        PERNo TEXT,
+        EmpName TEXT,
+        RankShortName TEXT,
+        PFType TEXT,
+        SeniortyNo TEXT,
+        PhoneNo1 TEXT,
+        PanCardNo TEXT,
+        Vender TEXT,
+        OldGPFNo TEXT,
+        NewGPFNo TEXT,
+        GPF_Head TEXT,
+        Bank_AC_No TEXT,
+        PPAN TEXT,
+        PRAN_No TEXT,
+        AAN TEXT,
+        SBFNo TEXT,
+        GROSS REAL,
+        DEDUCTION REAL,
+        NETPAY REAL,
+        NetBankAmount REAL,
+        New_BP REAL,
+        NPA REAL,
+        Basic_Pay REAL,
+        Grade_Pay REAL,
+        DA REAL,
+        DA_on_TPT REAL,
+        TPT REAL,
+        FAA REAL,
+        Special_pay REAL,
+        FPA REAL,
+        HRA REAL,
+        CILQ REAL,
+        KMA REAL,
+        WA REAL,
+        Medal_allow REAL,
+        Depu_Allow REAL,
+        PCA REAL,
+        SCA REAL,
+        RLA REAL,
+        SDA REAL,
+        NEHRA REAL,
+        Training_Allow REAL,
+        Cash_Handling_Allow REAL,
+        Hardship_allow REAL,
+        Risk_allow REAL,
+        CIOps_Allow REAL,
+        Other_Allow1 REAL,
+        Sumptuary_Allow REAL,
+        Security_Allow REAL,
+        Medical_allow REAL,
+        PLI REAL,
+        LIC REAL,
+        Tution_Fee REAL,
+        Less_Pension REAL,
+        GPF_NPS_sub REAL,
+        CGEGIS REAL,
+        Kit_Deduction REAL,
+        Licence_fee REAL,
+        ARGIS REAL,
+        Other_Recovery REAL,
+        Pay_Recovery REAL,
+        Computer_Adv REAL,
+        GPF_adv REAL,
+        Fes_adv REAL,
+        HBA REAL,
+        Pay_adv REAL,
+        Motor_adv REAL,
+        Income_tax REAL,
+        HigEdu_Cess1 REAL,
+        PrimEdu_Cess2 REAL,
+        RMR REAL,
+        RMA REAL,
+        HCA REAL,
+        STA REAL,
+        TLA REAL,
+        RA REAL,
+        Dress_Allow REAL,
+        High_Altit_Allow REAL,
+        Health_edu_cess REAL,
+        SBF REAL,
+        CWF REAL,
+        Sports_Fund REAL,
+        Battlion_Fund REAL,
+        GIA_FUND REAL,
+        Farewell REAL,
+        Other_Deduction REAL,
+        Profesional_Tax REAL,
+        HQ_OFFICER_Mess REAL,
+        HQ_JCO_Mess REAL,
+        HQ_ORS_Mess REAL,
+        A_Coy REAL,
+        Wet_Canteen REAL,
+        CPC REAL,
+        B_Coy REAL,
+        C_Coy REAL,
+        D_Coy REAL,
+        E_Coy REAL,
+        F_Coy REAL,
+        G_Coy REAL,
+        SP_Coy REAL,
+        BN_Fund_Loan REAL,
+        Family REAL,
+        MISC REAL,
+        CGHS REAL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    ''');
+  }
+
+  Future<List<Map<String, dynamic>>> getPaySlips(String uin) async {
+    final db = await database;
+    return await db.query(
+      'pay_slips',
+      where: 'PERNo = ?',
+      whereArgs: [uin],
+      orderBy: 'Year_Main DESC, MonthId DESC',
+    );
+  }
+
+  Future<Map<String, dynamic>?> getPaySlip(String uin, int month, int year) async {
+    final db = await database;
+    final results = await db.query(
+      'pay_slips',
+      where: 'PERNo = ? AND MonthId = ? AND Year_Main = ?',
+      whereArgs: [uin, month, year],
+      limit: 1,
+    );
+    
+    if (results.isNotEmpty) {
+      return results.first;
+    }
+    return null;
+  }
+
+  Future<List<Map<String, dynamic>>> getUserPayslips(String uidno) async {
+    final db = await database;
+    try {
+      print('Querying payslips for uidno: $uidno'); // Debug print
+      
+      // First, let's check if the table exists and has data
+      final tableCheck = await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='pay_slips'"
+      );
+      print('Table check result: $tableCheck'); // Debug print
+      
+      // Let's check total records in the table
+      final count = Sqflite.firstIntValue(
+        await db.rawQuery('SELECT COUNT(*) FROM pay_slips')
+      );
+      print('Total records in pay_slips table: $count'); // Debug print
+      
+      // Let's check records for this specific user
+      final userCount = Sqflite.firstIntValue(
+        await db.rawQuery('SELECT COUNT(*) FROM pay_slips WHERE PERNo = ?', [uidno])
+      );
+      print('Records for user $uidno: $userCount'); // Debug print
+      
+      // Now perform the actual query
+      final results = await db.query(
+        'pay_slips',
+        where: 'PERNo = ?',
+        whereArgs: [uidno],
+        orderBy: 'Year_Main DESC, MonthId DESC',
+      );
+      
+      print('Query results: $results'); // Debug print
+      return results;
+    } catch (e) {
+      print('Error fetching payslips for user $uidno: $e');
+      print('Stack trace: ${StackTrace.current}'); // Added stack trace
+      return [];
+    }
+  }
+
+  Future<void> createServiceHistoryTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE service_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        per_no TEXT NOT NULL,
+        posting_unit TEXT,
+        designation TEXT,
+        location TEXT,
+        start_date DATE,
+        end_date DATE,
+        order_no TEXT,
+        remarks TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    ''');
+
+    // Create index for faster queries
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_service_history_per_no ON service_history(per_no)'
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getServiceHistory(String perNo) async {
+    final db = await database;
+    return await db.query(
+      'service_history',
+      where: 'per_no = ?',
+      whereArgs: [perNo],
+      orderBy: 'start_date DESC',
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getTrainingHistory(String uidno) async {
+    final db = await database;
+    return await db.rawQuery('''
+      SELECT 
+        t.*,
+        tc.course_nm,
+        c.tc_nm as institute_name,
+        c.tc_adr as location
+      FROM training t
+      LEFT JOIN trainingcourse tc ON t.course = tc.id
+      LEFT JOIN trainingCenter c ON t.trainingCenter = c.tc_cd
+      WHERE t.uidno = ?
+      ORDER BY t.fromDate DESC
+    ''', [uidno]);
+  }
+
+  Future<List<LeaveCredit>> getLeaveCreditHistory(String uidno) async {
+    final db = await database;
+    final results = await db.query(
+      'tbl_leave_credit',
+      where: 'uidno = ?',
+      whereArgs: [uidno],
+      orderBy: 'dt_frm DESC',
+    );
+    
+    return results.map((map) => LeaveCredit.fromMap(map)).toList();
+  }
+
+  Future<Map<String, int>> getCurrentLeaveBalance(String uidno) async {
+    final db = await database;
+    final result = await db.query(
+      'tbl_leave_credit',
+      where: 'uidno = ?',
+      whereArgs: [uidno],
+      orderBy: 'dt_to DESC',
+      limit: 1,
+    );
+    
+    if (result.isEmpty) {
+      return {
+        'el': 0,
+        'hpl': 0,
+        'cl': 0,
+      };
+    }
+    
+    return {
+      'el': result.first['el_bal'] as int,
+      'hpl': result.first['hpl_bal'] as int,
+      'cl': result.first['bal_cl'] as int,
+    };
   }
 } 

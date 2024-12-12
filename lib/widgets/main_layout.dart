@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import '../screens/dashboard/dashboard_screen.dart';
+import '../screens/payslips/pay_slips_screen.dart';
+import '../screens/service/service_details_screen.dart';
+import '../screens/trainings/trainings_screen.dart';
+import '../screens/settings/settings_screen.dart';
+import '../main.dart'; // Import for CustomPageRoute
 
 class MainLayout extends StatefulWidget {
   final Widget child;
@@ -40,23 +46,33 @@ class _MainLayoutState extends State<MainLayout> {
       _selectedIndex = index;
     });
     
-    switch (index) {
-      case 0:
-        Navigator.pushReplacementNamed(context, '/dashboard');
-        break;
-      case 1:
-        Navigator.pushReplacementNamed(context, '/pay_slips');
-        break;
-      case 2:
-        Navigator.pushReplacementNamed(context, '/service_details');
-        break;
-      case 3:
-        Navigator.pushReplacementNamed(context, '/trainings');
-        break;
-      case 4:
-        Navigator.pushReplacementNamed(context, '/settings');
-        break;
-    }
+    final route = switch (index) {
+      0 => '/dashboard',
+      1 => '/pay_slips',
+      2 => '/service_details',
+      3 => '/trainings',
+      4 => '/settings',
+      _ => '/dashboard',
+    };
+
+    Navigator.pushReplacement(
+      context,
+      CustomPageRoute(
+        builder: (_) => _buildPage(route),
+        settings: RouteSettings(name: route),
+      ),
+    );
+  }
+
+  Widget _buildPage(String route) {
+    return switch (route) {
+      '/dashboard' => const DashboardScreen(),
+      '/pay_slips' => const PaySlipsScreen(),
+      '/service_details' => const ServiceDetailsScreen(),
+      '/trainings' => const TrainingsScreen(),
+      '/settings' => const SettingsScreen(),
+      _ => const DashboardScreen(),
+    };
   }
 
   @override

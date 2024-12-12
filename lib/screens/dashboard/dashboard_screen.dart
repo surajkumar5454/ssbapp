@@ -8,6 +8,7 @@ import '../../services/auth_service.dart';
 import 'package:intl/intl.dart';
 import '../../widgets/image_viewer_dialog.dart';
 import '../../services/deputation_service.dart';
+import '../profile/service_history_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -302,15 +303,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   onTap: () => Navigator.pushNamed(context, '/personal_details'),
                 ),
                 _buildActionButton(
-                  icon: Icons.receipt_long,
-                  label: 'Pay Slips',
-                  onTap: () => Navigator.pushNamed(context, '/pay_slips'),
-                ),
-                _buildActionButton(
                   icon: Icons.business_center,
                   label: 'e-DAS',
                   badge: _buildDeputationBadge(),
                   onTap: () => Navigator.pushNamed(context, '/deputation'),
+                ),
+                _buildActionButton(
+                  icon: Icons.history,
+                  label: 'Service\nHistory',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ServiceHistoryScreen(),
+                    ),
+                  ),
                 ),
                 _buildActionButton(
                   icon: Icons.school,
@@ -321,6 +327,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   icon: Icons.family_restroom,
                   label: 'Family',
                   onTap: () => Navigator.pushNamed(context, '/family'),
+                ),
+                _buildActionButton(
+                  icon: Icons.event_available,
+                  label: 'Leave\nCredits',
+                  onTap: () => Navigator.pushNamed(context, '/leave_credits'),
                 ),
                 _buildActionButton(
                   icon: Icons.report_problem,

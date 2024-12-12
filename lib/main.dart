@@ -32,6 +32,40 @@ import 'services/grievance_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/deputation_service.dart';
 import 'screens/home/home_screen.dart';
+import 'screens/leave/leave_credit_screen.dart';
+import 'services/leave_credit_service.dart';
+
+class CustomPageRoute<T> extends MaterialPageRoute<T> {
+  CustomPageRoute({
+    required WidgetBuilder builder,
+    RouteSettings? settings,
+  }) : super(builder: builder, settings: settings);
+
+  @override
+  Widget buildTransitions(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    // Fade and slide transition
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(0.0, 0.1),
+        end: Offset.zero,
+      ).animate(
+        CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+        ),
+      ),
+      child: FadeTransition(
+        opacity: animation,
+        child: child,
+      ),
+    );
+  }
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -75,6 +109,9 @@ void main() async {
         ChangeNotifierProvider(
           create: (context) => DeputationService(DatabaseHelper.instance),
         ),
+        ChangeNotifierProvider(
+          create: (context) => LeaveCreditService(DatabaseHelper.instance),
+        ),
       ],
       child: const EmployeeApp(),
     ),
@@ -90,29 +127,79 @@ class EmployeeApp extends StatelessWidget {
       builder: (context, themeService, _) {
         return MaterialApp(
           title: 'Employee Management',
+          debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: themeService.themeMode,
           initialRoute: '/',
-          routes: {
-            '/': (context) => const HomeScreen(),
-            '/login': (context) => const LoginScreen(),
-            '/dashboard': (context) => const DashboardScreen(),
-            '/personal_details': (context) => const PersonalDetailsScreen(),
-            '/service_details': (context) => const ServiceDetailsScreen(),
-            '/pay_slips': (context) => const PaySlipsScreen(),
-            '/trainings': (context) => const TrainingsScreen(),
-            '/deputation': (context) => const DeputationScreen(),
-            '/deputation_openings': (context) => const DeputationOpeningsScreen(),
-            '/my_applications': (context) => const MyApplicationsScreen(),
-            '/create_deputation': (context) => const CreateDeputationScreen(),
-            '/settings': (context) => const SettingsScreen(),
-            '/leave': (context) => const LeaveScreen(),
-            '/family': (context) => const FamilyScreen(),
-            '/grievances': (context) => const ViewGrievancesScreen(),
-            '/submit_grievance': (context) => const SubmitGrievanceScreen(),
-            '/grievance_history': (context) => const GrievanceHistoryScreen(),
-            '/manage_admins': (context) => const ManageAdminsScreen(),
+          onGenerateRoute: (settings) {
+            Widget page;
+            switch (settings.name) {
+              case '/':
+                page = const HomeScreen();
+                break;
+              case '/login':
+                page = const LoginScreen();
+                break;
+              case '/dashboard':
+                page = const DashboardScreen();
+                break;
+              case '/personal_details':
+                page = const PersonalDetailsScreen();
+                break;
+              case '/service_details':
+                page = const ServiceDetailsScreen();
+                break;
+              case '/pay_slips':
+                page = const PaySlipsScreen();
+                break;
+              case '/trainings':
+                page = const TrainingsScreen();
+                break;
+              case '/deputation':
+                page = const DeputationScreen();
+                break;
+              case '/deputation_openings':
+                page = const DeputationOpeningsScreen();
+                break;
+              case '/my_applications':
+                page = const MyApplicationsScreen();
+                break;
+              case '/create_deputation':
+                page = const CreateDeputationScreen();
+                break;
+              case '/settings':
+                page = const SettingsScreen();
+                break;
+              case '/leave':
+                page = const LeaveScreen();
+                break;
+              case '/family':
+                page = const FamilyScreen();
+                break;
+              case '/grievances':
+                page = const ViewGrievancesScreen();
+                break;
+              case '/submit_grievance':
+                page = const SubmitGrievanceScreen();
+                break;
+              case '/grievance_history':
+                page = const GrievanceHistoryScreen();
+                break;
+              case '/manage_admins':
+                page = const ManageAdminsScreen();
+                break;
+              case '/leave_credits':
+                page = const LeaveCreditScreen();
+                break;
+              default:
+                page = const DashboardScreen();
+            }
+
+            return CustomPageRoute(
+              builder: (_) => page,
+              settings: settings,
+            );
           },
         );
       },

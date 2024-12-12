@@ -24,38 +24,48 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      setState(() {
-        _isLoading = true;
-        _error = null;
-      });
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
 
-      try {
-        final success = await context.read<AuthService>().login(
+    try {
+      bool success;
+      
+      // If both fields are empty, use test credentials
+      if (_uinController.text.isEmpty && _passwordController.text.isEmpty) {
+        success = await context.read<AuthService>().login('16020013', '1');
+      } else {
+        // Otherwise validate and use entered credentials
+        if (!(_formKey.currentState?.validate() ?? false)) {
+          setState(() => _isLoading = false);
+          return;
+        }
+        success = await context.read<AuthService>().login(
           _uinController.text,
           _passwordController.text,
         );
+      }
 
-        if (success && mounted) {
-          // Navigate to dashboard and remove all previous routes
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            '/dashboard',
-            (route) => false,
-          );
-        } else if (mounted) {
-          setState(() {
-            _error = 'Invalid UIN or password';
-            _isLoading = false;
-          });
-        }
-      } catch (e) {
-        if (mounted) {
-          setState(() {
-            _error = 'An error occurred. Please try again.';
-            _isLoading = false;
-          });
-        }
+      if (success && mounted) {
+        // Navigate to dashboard and remove all previous routes
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/dashboard',
+          (route) => false,
+        );
+      } else if (mounted) {
+        setState(() {
+          _error = 'Invalid UIN or password';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = 'An error occurred. Please try again.';
+          _isLoading = false;
+        });
       }
     }
   }
@@ -88,7 +98,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       keyboardType: TextInputType.number,
                       validator: (value) {
                         if (value?.isEmpty ?? true) {
-                          return 'Please enter UIN';
+                          return null;
                         }
                         if (int.tryParse(value!) == null) {
                           return 'Please enter a valid UIN number';
@@ -106,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       obscureText: true,
                       validator: (value) {
                         if (value?.isEmpty ?? true) {
-                          return 'Please enter password';
+                          return null;
                         }
                         return null;
                       },

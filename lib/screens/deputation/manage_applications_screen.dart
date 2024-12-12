@@ -20,8 +20,7 @@ class _ManageApplicationsScreenState extends State<ManageApplicationsScreen> {
   void initState() {
     super.initState();
     _loadData();
-  }
-
+  160200pal
   Future<void> _loadData() async {
     final service = context.read<DeputationService>();
     await service.loadActiveOpenings();
